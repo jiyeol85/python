@@ -1,0 +1,41 @@
+import tkinter as tk
+from tkinter import filedialog
+from PIL import Image
+import pytesseract
+
+# Tesseract OCRのインストールパスを指定します。
+pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
+
+# 画像選択のための関数
+def select_image():
+    image_path = filedialog.askopenfilename(filetypes=[('画像ファイル', '*.png;*.jpg;*.jpeg')])
+    if image_path:
+        image = Image.open(image_path)
+        text = pytesseract.image_to_string(image, lang=language_var.get())
+        text_label.delete('1.0', tk.END)  # 以前のテキストを削除
+        text_label.insert(tk.END, text)
+
+# ウィンドウの作成
+window = tk.Tk()
+window.title("OCR プログラム")
+
+# 画像選択ボタン
+select_button = tk.Button(window, text="画像を選択", command=select_image)
+select_button.pack(pady=10)
+
+# 言語選択ラジオボタン
+language_var = tk.StringVar()
+english_radio = tk.Radiobutton(window, text="英語", variable=language_var, value='eng')
+english_radio.pack()
+korean_radio = tk.Radiobutton(window, text="韓国語", variable=language_var, value='kor')
+korean_radio.pack()
+japanese_radio = tk.Radiobutton(window, text="日本語", variable=language_var, value='jpn')
+japanese_radio.pack()
+# 他の言語を追加する場合は、同様の方法でラジオボタンを追加します。
+
+# テキスト表示テキストボックス
+text_label = tk.Text(window, height=30, width=80)
+text_label.pack()
+
+# メインイベントループの実行
+window.mainloop()
