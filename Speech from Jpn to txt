@@ -1,0 +1,63 @@
+import speech_recognition as sr
+import tkinter as tk
+import threading
+from datetime import datetime
+
+# 音声認識の初期化
+r = sr.Recognizer()
+
+# 音声を認識し、日本語に変換する関数
+def recognize_speech():
+    # 音声認識ボタンを非活性化
+    record_button.config(state=tk.DISABLED)
+    # 音声認識終了ボタンを活性化
+    stop_button.config(state=tk.NORMAL)
+
+    def process_audio():
+        with sr.Microphone() as source:
+            print("リスニング中...")
+            try:
+                audio = r.listen(source, timeout=5)
+                print("変換中...")
+                text = r.recognize_google(audio, language='ja-JP')
+                print("認識結果:", text)
+                current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                display_text.insert(tk.END, f"[{current_time}] 私: {text}\n")
+            except sr.WaitTimeoutError:
+                print("タイムアウトが発生しました。音声認識を停止します")
+            except sr.UnknownValueError:
+                print("音声を認識できませんでした")
+            except sr.RequestError as e:
+                print("エラーが発生しました：{0}".format(e))
+
+            # 音声認識ボタンを再度活性化
+            record_button.config(state=tk.NORMAL)
+            # 音声認識終了ボタンを非活性化
+            stop_button.config(state=tk.DISABLED)
+
+    # 音声処理を新しいスレッドで実行
+    threading.Thread(target=process_audio).start()
+
+# 音声認識終了関数
+def stop_recognition():
+    r.stop_listening()
+
+# GUIの生成
+window = tk.Tk()
+window.title("日本語音声認識")
+window.geometry("400x350")
+
+# 音声認識ボタン
+record_button = tk.Button(window, text="音声認識開始", command=recognize_speech)
+record_button.pack(pady=10)
+
+# 音声認識終了ボタン
+stop_button = tk.Button(window, text="音声認識終了", command=stop_recognition, state=tk.DISABLED)
+stop_button.pack(pady=10)
+
+# 出力ウィンドウ
+display_text = tk.Text(window, height=10, width=40)
+display_text.pack()
+
+# GUIの実行
+window.mainloop()
