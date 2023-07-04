@@ -1,0 +1,55 @@
+import tkinter as tk
+from tkinter import messagebox
+from googletrans import Translator
+
+def translate_ko_to_ja():
+    text = input_text.get("1.0", tk.END).strip()  # 入力テキストを取得
+    if not text:  # テキストが空の場合、メッセージボックスを表示
+        messagebox.showinfo("警告", "テキストを入力してください。")
+        return
+
+    translator = Translator()
+    result = translator.translate(text, src="ko", dest="ja")  # 韓国語から日本語への翻訳
+
+    output_text.delete("1.0", tk.END)  # 前回の出力テキストを削除
+    output_text.insert(tk.END, result.text)  # 翻訳結果を出力テキストに挿入
+
+def translate_ko_to_en():
+    text = input_text.get("1.0", tk.END).strip()  # 入力テキストを取得
+    if not text:  # テキストが空の場合、メッセージボックスを表示
+        messagebox.showinfo("警告", "テキストを入力してください。")
+        return
+
+    translator = Translator()
+    result = translator.translate(text, src="ko", dest="en")  # 韓国語から英語への翻訳
+
+    output_text.delete("1.0", tk.END)  # 前回の出力テキストを削除
+    output_text.insert(tk.END, result.text)  # 翻訳結果を出力テキストに挿入
+
+# ウィンドウ生成
+window = tk.Tk()
+window.title("韓国語翻訳")
+window.geometry("640x480")
+
+# 入力テキストボックス生成
+input_label = tk.Label(window, text="韓国語入力:")
+input_label.pack()
+input_text = tk.Text(window, height=12)
+input_text.pack()
+
+# 日本語翻訳ボタン生成
+translate_ja_button = tk.Button(window, text="韓国語 -> 日本語", command=translate_ko_to_ja)
+translate_ja_button.pack()
+
+# 英語翻訳ボタン生成
+translate_en_button = tk.Button(window, text="韓国語 -> 英語", command=translate_ko_to_en)
+translate_en_button.pack()
+
+# 出力テキストボックス生成
+output_label = tk.Label(window, text="翻訳結果:")
+output_label.pack()
+output_text = tk.Text(window, height=12)
+output_text.pack()
+
+# プログラム実行
+window.mainloop()
