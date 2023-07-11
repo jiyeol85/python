@@ -1,0 +1,95 @@
+from tkinter import filedialog
+from tkinter import Tk, Button, Canvas, Scale, HORIZONTAL
+from PIL import Image, ImageTk
+import cv2
+import numpy as np
+
+brush_size = 5
+drawing = False
+
+def load_image():
+    global img, original_img, mask, photo, cv_img, canvas
+    filename = filedialog.askopenfilename()
+    cv_image = cv2.imread(filename)
+    if cv_image is None:
+        print(f"Failed to load image at {filename}")
+        return
+    cv_img = cv2.cvtColor(cv_image, cv2.COLOR_BGR2RGB)
+    img = Image.fromarray(cv_img)
+    original_img = img.copy()  # Store the original image
+    mask = np.zeros((img.height, img.width), dtype=np.uint8)
+    photo = ImageTk.PhotoImage(img)
+    canvas.config(width=img.width, height=img.height)
+    canvas.create_image(0, 0, image=photo, anchor="nw")
+
+def start_draw(event):
+    global drawing
+    drawing = True
+    draw(event)
+
+def stop_draw(event):
+    global drawing
+    drawing = False
+
+def draw(event):
+    if not drawing:
+        return
+    x1, y1 = (event.x - brush_size), (event.y - brush_size)
+    x2, y2 = (event.x + brush_size), (event.y + brush_size)
+    canvas.create_oval(x1, y1, x2, y2, fill='black')
+    mask[y1:y2, x1:x2] = 255
+
+def apply_mosaic():
+    global img, original_img, mask, photo, cv_img
+    pixel_size = brush_size*2
+    for y in range(0, img.height, pixel_size):
+        for x in range(0, img.width, pixel_size):
+            if np.any(mask[y:y+pixel_size, x:x+pixel_size] == 255):
+                cv_img[y:y+pixel_size, x:x+pixel_size, :] = cv2.resize(cv2.resize(cv_img[y:y+pixel_size, x:x+pixel_size, :], (1, 1)), (pixel_size, pixel_size))
+    img = Image.fromarray(cv_img)
+    mask.fill(0)
+    photo = ImageTk.PhotoImage(img)
+    canvas.create_image(0, 0, image=photo, anchor="nw")
+
+def reset_image():
+    global img, original_img, mask, photo, cv_img
+    img = original_img.copy()  # Reset to the original image
+    cv_img = np.array(img)
+    mask.fill(0)
+    photo = ImageTk.PhotoImage(img)
+    canvas.create_image(0, 0, image=photo, anchor="nw")
+
+def save_image():
+    global img
+    filename = filedialog.asksaveasfilename(defaultextension=".jpg")
+    img.save(filename)
+
+def update_brush_size(val):
+    global brush_size
+    brush_size = int(val)
+
+root = Tk()
+
+load_button = Button(root, text="Load Image", command=load_image)
+load_button.pack()
+
+mosaic_button = Button(root, text="Apply Mosaic", command=apply_mosaic)
+mosaic_button.pack()
+
+reset_button = Button(root, text="Reset Image", command=reset_image)
+reset_button.pack()
+
+save_button = Button(root, text="Save Image", command=save_image)
+save_button.pack()
+
+brush_size_scale = Scale(root, from_=1, to=50, orient=HORIZONTAL, command=update_brush_size)
+brush_size_scale.set(brush_size)
+brush_size_scale.pack()
+
+canvas = Canvas(root)
+canvas.pack()
+canvas.bind("<Button-1>", start_draw)
+canvas.bind("<B1-Motion>", draw)
+canvas.bind("<ButtonRelease-1>", stop_draw)
+
+root.mainloop()
